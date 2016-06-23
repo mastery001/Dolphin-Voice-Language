@@ -1,0 +1,10 @@
+var a = 1;
+var b = 2;
+var c = function() {
+  var a = 3;
+  println(a);
+  println(b);
+};
+c();
+println(a);
+println(b);
