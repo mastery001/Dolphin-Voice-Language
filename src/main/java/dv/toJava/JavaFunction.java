@@ -12,6 +12,13 @@ import dv.entry.SymtabEntry;
 import dv.entry.ValueEntry;
 import dv.entry.VariableEntry;
 
+  
+/**  
+ *@Description:  Java方法的抽象执行
+ *@Author:zouziwen
+ *@Since:2016年6月13日  
+ *@Version:1.1.0  
+ */
 public abstract class JavaFunction implements Function{
 
 	private String name;

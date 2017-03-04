@@ -1,5 +1,17 @@
 package dv;
 
+  
+  
+/**  
+ *@Description:  Token定义：<p>
+ *					1. 变量<p>
+ *					2. 符号(操作符、语句、块、注释等分隔符)<p>
+ *					3. 关键字<p>
+ * 					Notes:注释不属于Token，只属于Token中的属性
+ *@Author:zouziwen
+ *@Since:2016年6月13日  
+ *@Version:1.1.0  
+ */
 public class Token {
 
 	public static final int 
@@ -9,7 +21,7 @@ public class Token {
 			
 			Identifier           =  80, // Identifier
 			
-			Semicolon = 100,	// Symbols	
+			Semicolon = 100,	// 详见 Symbols
 			LeftBrace = 101, 		
 			RightBrace = 102, 		
 			Colon = 103, 		
@@ -56,33 +68,45 @@ public class Token {
 			
 			EOF = 999; // End of Input
 
+	// 符号标识，对应上述常量中的相应英文
 	public static final String[] Symbols = { ";", "{", "}", ":", ",", "(", ")", "[", "]", "'", "\"", "\\", "::", ".",
 			"#", "!", "=", "+", "-", "*", "/", "%", "<", ">", "==", "|", "^", "&", "~", "!=", ">=", "<=", "||", "&&",
 			"<<", ">>" };
 	
 
+	// dv语言的关键字
 	public static final String[] Keywords = { "any" , "var" , "function" };
 	
+	// 关键字的初始下标，结束下标
 	static final int 
 	FirstKeyword = 0,
 	LastKeyword = 2;
 	
+	// 符号的初始下标，结束下标
 	static final int 
 	FirstSymbol = 100,
 	LastSymbol = 135;
 
+	// 操作符的初始下标，结束下标
 	static final int 
 	FitstOperator = 115,
 	LastOperator = 135;
 	
+	
+	/**  
+	 * @return  是否为操作符
+	 * @Description:  
+	 */
 	boolean isOperator() {
 		return type >= FitstOperator && type <= LastOperator;
 	}
 	
+	// 常量的类型的初始下标，结束下标
 	static final int
     FirstLiteral = 200,
     LastLiteral  = 299;
 
+	// 常量的类型
 	private static final String[] Literals = {
 		      Util.getMessage ("Token.boolLit"),
 		      Util.getMessage ("Token.charLit"),
@@ -91,6 +115,10 @@ public class Token {
 		      Util.getMessage ("Token.stringLit"),
 		      Util.getMessage ("Token.literal")};
 	
+	/**  
+	 * @return  是否为常量
+	 * @Description:  
+	 */
 	boolean isLiterals() {
 		return type >= FirstLiteral && type <= LastLiteral;
 	}
@@ -101,8 +129,14 @@ public class Token {
 	 */
 	int type;
 
+	/**  
+	 *   变量名
+	 */
 	String name;
 	
+	/**  
+	 *   该行语句的注释
+	 */
 	String comment;
 
 	/**
@@ -159,6 +193,13 @@ public class Token {
 		return Util.getMessage ("Token.unknown");
 	};
 
+	/**  
+	 * @param string
+	 * @param escapedOK	超出关键字的范围
+	 * @param collision	是否为关键字
+	 * @return  
+	 * @Description:  获得关键字的Token
+	 */
 	public static Token makeKeywordToken(String string, boolean escapedOK, boolean[] collision) {
 		for (int i = Token.FirstKeyword; i <= Token.LastKeyword; ++i) {
 			if (string.equals (Token.Keywords[i])) {

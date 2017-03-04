@@ -40,20 +40,41 @@ import dv.entry.VariableEntry;
  */
 class Parser {
 
+	/**  
+	 *   启动时指定的arguments
+	 */
 	Arguments arguments;
 
+	/**  
+	 *   关键字
+	 */
 	private String[] keywords;
 
 	Token token = null;
 
+	/**  
+	 *   token历史，常用：1.寻找语句的注释；
+	 */
 	private TokenBuffer tokenHistory = new TokenBuffer();
 
+	/**  
+	 *   一个dv文件所有语句（变量，方法，方法声明等）的集合
+	 */
 	ModuleEntry module;
 
+	/**  
+	 *   扫描器(词法分析)
+	 */
 	Scanner scanner = null;
 
+	/**  
+	 *   组件集合(可能包含#include，即多个文件；目前尚不支持该功能)
+	 */
 	Vector<ModuleEntry> emitList = new Vector<ModuleEntry>();
 
+	/**  
+	 *   表达式工厂，用于生成所有的表达式对象
+	 */
 	private ExprFactory exprFactory = null;
 
 	Parser(Arguments arguments, ExprFactory exprFactory, String[] keywords) {
@@ -105,11 +126,17 @@ class Parser {
 
 	private void specification(ModuleEntry entry) throws IOException {
 		while (!token.equals(Token.EOF)) {
+			// 解析语句
 			definition(entry);
 		}
 		addToEmitList(entry);
 	}
 
+	/**  
+	 * @param entry
+	 * @throws IOException  
+	 * @Description:  解析变量，方法，或赋值或方法调用
+	 */
 	private void definition(ModuleEntry entry) throws IOException {
 		try {
 			switch (token.type) {
@@ -127,6 +154,7 @@ class Parser {
 				throw ParseException.syntaxError(scanner, new int[] { Token.VAR, Token.FUNCTION, Token.Identifier },
 						token.type);
 			}
+			// 匹配;符号，并读取下一个token(;代表一行的结束)
 			match(Token.Semicolon);
 		} catch (ParseException e) {
 			skipToSemicolon();
@@ -150,6 +178,7 @@ class Parser {
 			match(Token.Equal);
 			varAssignment(entry, varEntry);
 		} else if (token.equals(Token.LeftParen)) {
+			//方法调用
 			FunctionEntry functionEntry = makeFunctionEntry(name, entry, true);
 			params(entry, functionEntry);
 		}
@@ -162,7 +191,9 @@ class Parser {
 			functionEntry.name(token.getName());
 			match(Token.Identifier);
 		}
+		// 参数列表
 		params(entry, functionEntry);
+		// 方法体
 		functionBody(functionEntry);
 		return functionEntry;
 	}
@@ -282,6 +313,13 @@ class Parser {
 		}
 	}
 
+	/**  
+	 * @param entry
+	 * @return
+	 * @throws IOException
+	 * @throws ParseException  
+	 * @Description:  解析var定义的VariableEntry
+	 */
 	private VariableEntry varType(ModuleEntry entry) throws IOException, ParseException {
 		match(Token.VAR);
 		VariableEntry varEntry = defineVariable(entry);
@@ -312,6 +350,7 @@ class Parser {
 				VariableEntry tmp = defineVariable(entry);
 				varEntry.type(tmp.type());
 			}
+			// 给变量赋值
 			varAssignment(entry, varEntry);
 		} else {
 			throw ParseException.syntaxError(scanner, new int[] { Token.Semicolon, Token.Equal }, token.type);
@@ -335,7 +374,7 @@ class Parser {
 	 *             2016年6月17日 下午3:17:27
 	 */
 	private void varAssignment(ModuleEntry entry, VariableEntry varEntry) throws IOException, ParseException {
-	
+		// 变量值
 		if (token.isLiterals() || token.isOperator() || token.equals(Token.LeftParen)) {
 			ValueEntry ve = makeValueEntry(operateExp(entry).value());
 			varEntry.type(ve);
@@ -346,11 +385,13 @@ class Parser {
 //			varEntry.type(ve);
 
 		} else if (token.equals(Token.FUNCTION)) {
+			// 定义方法
 			// 形如: function(a,b,c){..}
 			FunctionEntry fe = functionType(entry);
 			fe.namedInvoke(varEntry.name());
 			varEntry.type(fe);
 		} else if (token.equals(Token.Identifier)) {
+			// 方法调用
 			String functionName = token.getName();
 			match(Token.Identifier);
 			varEntry.type(makeFunctionEntry(functionName, entry, false));
@@ -362,9 +403,17 @@ class Parser {
 		}
 	}
 
+	/**  
+	 * @param entry
+	 * @return
+	 * @throws IOException
+	 * @throws ParseException  
+	 * @Description:  生成表达式
+	 */
 	private Expression operateExp(ModuleEntry entry) throws IOException, ParseException {
 		Expression expr = orExpr(null, entry);
 		try {
+			// 计算值
 			expr.evaluate();
 		} catch (EvaluationException e) {
 			ParseException.evaluationError (scanner, e.toString ());
@@ -524,6 +573,13 @@ class Parser {
 		return primaryExpr(entry);
 	}
 
+	/**  
+	 * @param entry
+	 * @return
+	 * @throws IOException
+	 * @throws ParseException  
+	 * @Description:  常量或()内部
+	 */
 	private Expression primaryExpr(ModuleEntry entry) throws IOException, ParseException {
 		Expression primary = null;
 		switch (token.type) {

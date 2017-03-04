@@ -29,7 +29,14 @@ import dv.entry.IncludeEntry;
  */
 class Scanner {
 
+	/**  
+	 *  数据栈 
+	 */
 	Stack<ScannerData> dataStack = new Stack<ScannerData>();
+	
+	/**  
+	 *   关键字
+	 */
 	Vector<String> keywords = new Vector<String>();
 	ScannerData data = new ScannerData();
 
@@ -76,6 +83,9 @@ class Scanner {
 	 *             2016年6月15日 下午3:03:35
 	 */
 	void readFile(IncludeEntry file, String filename) throws IOException {
+		/**
+		 * 读取文件内容是ScannerData对象中
+		 */
 		data.fileEntry = file;
 		data.filename = filename;
 
@@ -95,6 +105,7 @@ class Scanner {
 		for (int i = 0; i < EOL.length(); i++)
 			data.fileBytes[len + i] = EOL.charAt(i);
 
+		// 读取一个字符判断是否为空，如果是空行则跳行
 		readChar();
 
 	}
@@ -119,6 +130,12 @@ class Scanner {
 		}
 	}
 
+	/**  
+	 * @return 
+	 * @throws IOException  
+	 * @Description:  读取Token
+	 * @see Token
+	 */
 	Token getToken() throws IOException {
 		Token token = null;
 		String commentText = new String("");
@@ -301,6 +318,13 @@ class Scanner {
 		return token;
 	}
 
+	  
+	/**  
+	 *@Description:  注释扫描器
+	 *@Author:zouziwen
+	 *@Since:2017年3月4日  
+	 *@Version:1.1.0  
+	 */
 	class CommentScanner {
 
 		/**
@@ -351,6 +375,13 @@ class Scanner {
 
 	}
 
+	  
+	/**  
+	 *@Description:  String的扫描器
+	 *@Author:zouziwen
+	 *@Since:2016年6月13日  
+	 *@Version:1.1.0  
+	 */
 	private class StringScanner {
 		Token getString() throws IOException {
 			StringBuffer sbuf = new StringBuffer();
@@ -388,6 +419,13 @@ class Scanner {
 		}
 	}
 
+	  
+	/**  
+	 *@Description:  字符扫描器
+	 *@Author:zouziwen
+	 *@Since:2016年6月13日  
+	 *@Version:1.1.0  
+	 */
 	private class CharScanner {
 		Token getCharacterToken(boolean isWide) throws IOException {
 			Token token = null;
@@ -514,6 +552,13 @@ class Scanner {
 
 	}
 
+	  
+	/**  
+	 *@Description:  数字扫描器
+	 *@Author:zouziwen
+	 *@Since:2016年6月13日  
+	 *@Version:1.1.0  
+	 */
 	private class NumberScanner {
 		Token getNumber() throws IOException {
 			if (data.ch == '.')
@@ -630,6 +675,15 @@ class Scanner {
 		return getUntil(c, true, true, true);
 	}
 
+	/**  
+	 * @param c
+	 * @param allowQuote
+	 * @param allowCharLit
+	 * @param allowComment
+	 * @return 读取字符常量的后续值，直到遇到"
+	 * @throws IOException  
+	 * @Description:  
+	 */
 	String getUntil(char c, boolean allowQuote, boolean allowCharLit, boolean allowComment) throws IOException {
 		String string = "";
 		while (data.ch != c)
@@ -637,6 +691,15 @@ class Scanner {
 		return string;
 	} // getUntil
 
+	/**  
+	 * @param string
+	 * @param allowQuote
+	 * @param allowCharLit
+	 * @param allowComment
+	 * @return
+	 * @throws IOException  
+	 * @Description:  填充下一个字符
+	 */
 	private String appendToString(String string, boolean allowQuote, boolean allowCharLit, boolean allowComment)
 			throws IOException {
 		// Ignore any comments if they are allowed
@@ -688,6 +751,10 @@ class Scanner {
 		return string;
 	}
 
+	/**  
+	 * @throws IOException  
+	 * @Description:  跳过块注释
+	 */
 	void skipBlockComment() throws IOException {
 		try {
 			boolean done = false;
@@ -704,6 +771,10 @@ class Scanner {
 		}
 	}
 
+	/**  
+	 * @throws IOException  
+	 * @Description:  跳过行注释
+	 */
 	void skipLineComment() throws IOException {
 		while (data.ch != '\n')
 			readChar();

@@ -6,7 +6,7 @@ import java.util.Map;
 import dv.entry.SymtabEntry;
 
 /**
- * 解释链
+ * 解释执行链
  * @author zouziwen
  *
  * 2016年6月19日 下午3:24:24

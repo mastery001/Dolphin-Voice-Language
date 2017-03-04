@@ -1,5 +1,12 @@
 package dv;
 
+  
+/**  
+ *@Description:  解释运行时的异常
+ *@Author:zouziwen
+ *@Since:2016年6月13日
+ *@Version:1.1.0  
+ */
 public class InterpreteException extends RuntimeException{
 
 	/**

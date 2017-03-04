@@ -4,6 +4,11 @@ import java.math.BigInteger;
 
 public abstract class Expression {
 
+	/**  
+	 * @return
+	 * @throws EvaluationException  
+	 * @Description:  计算出表达式的值
+	 */
 	public abstract Object evaluate() throws EvaluationException;
 
 	private Object _value = null;
