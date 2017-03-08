@@ -128,8 +128,8 @@ class Parser {
 		while (!token.equals(Token.EOF)) {
 			// 解析语句
 			definition(entry);
-			addToEmitList(entry);
 		}
+		addToEmitList(entry);
 	}
 
 	/**  
