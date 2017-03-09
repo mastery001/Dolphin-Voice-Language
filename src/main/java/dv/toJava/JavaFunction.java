@@ -68,7 +68,7 @@ public abstract class JavaFunction implements Function{
 		this._parameters = _parameters;
 	}
 
-	private Object paramOf(SymtabEntry e) {
+	protected Object paramOf(SymtabEntry e) {
 		if(e instanceof JoinEntry) {
 			StringBuffer sb = new StringBuffer();
 			for(Iterator<SymtabEntry> it = ((JoinEntry) e).entries().iterator(); it.hasNext();) {
