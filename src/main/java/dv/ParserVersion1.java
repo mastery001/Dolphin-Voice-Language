@@ -21,8 +21,6 @@ class ParserVersion1 {
 
 	Arguments arguments;
 
-	private String[] keywords;
-
 	Token token = null;
 
 	private TokenBuffer tokenHistory = new TokenBuffer();
@@ -31,9 +29,8 @@ class ParserVersion1 {
 
 	Scanner scanner = null;
 
-	ParserVersion1(Arguments arguments, String[] keywords) {
+	ParserVersion1(Arguments arguments) {
 		this.arguments = arguments;
-		this.keywords = keywords;
 		module = new ModuleEntry();
 	}
 
@@ -41,7 +38,7 @@ class ParserVersion1 {
 		IncludeEntry fileEntry = new IncludeEntry();
 		fileEntry.name('"' + file + '"');
 
-		scanner = new Scanner(fileEntry, keywords);
+		scanner = new Scanner(fileEntry);
 
 		module.sourceFile(fileEntry);
 

@@ -21,6 +21,10 @@ public class ValueEntry extends SymtabEntry {
 	public ValueEntry() {
 
 	}
+	
+	public ValueEntry(Object _value) {
+		this._value = _value;
+	}
 
 	public Object value() {
 		return _value;

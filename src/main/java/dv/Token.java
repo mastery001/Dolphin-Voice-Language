@@ -15,9 +15,25 @@ package dv;
 public class Token {
 
 	public static final int 
-			ANY = 0,
-			VAR = 1,
-			FUNCTION = 2,
+			/*
+		     * Declaration keywords
+		     */
+			VAR			    = 0,
+			FUNCTION        = 1,
+			/*
+			 * Statement keywords
+			 */
+			IF				= 2,
+			ELSE			= 3,
+			FOR				= 4,
+			WHILE		    = 5,
+			DO              = 6,
+			SWITCH          = 7,
+			CASE            = 8,
+			DEFAULT         = 9,
+			BREAK           = 10,
+			CONTINUE        = 11,
+			RETURN          = 12,
 			
 			Identifier           =  80, // Identifier
 			
@@ -75,12 +91,12 @@ public class Token {
 	
 
 	// dv语言的关键字
-	public static final String[] Keywords = { "any" , "var" , "function" };
+	public static final String[] Keywords = { "var" , "function" , "if" , "else" , "for" , "while" , "do" , "switch" , "case" , "default" , "break" , "continue" , "return"};
 	
 	// 关键字的初始下标，结束下标
 	static final int 
 	FirstKeyword = 0,
-	LastKeyword = 2;
+	LastKeyword = 12;
 	
 	// 符号的初始下标，结束下标
 	static final int 

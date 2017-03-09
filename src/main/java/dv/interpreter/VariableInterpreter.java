@@ -7,10 +7,7 @@ import dv.InterpreteException;
 import dv.InterpreterChain;
 import dv.Variable;
 import dv.entry.FunctionEntry;
-import dv.entry.SymtabEntry;
-import dv.entry.ValueEntry;
 import dv.entry.VariableEntry;
-import dv.utils.TypeUtils;
 
 /**
  * 变量解释器
@@ -28,20 +25,50 @@ class VariableInterpreter extends AbstractInterpreter<VariableEntry> {
 
 	@Override
 	public void interprete0(InterpreterChain chain, VariableEntry entry, ExecutionContext context)  throws InterpreteException{
-		SymtabEntry valueType = entry.type();
-		Variable variable = null;
-		if (valueType instanceof ValueEntry) {
-			ValueEntry valueEntry = (ValueEntry) valueType;
-			variable = new JavaVariable(entry.name(), TypeUtils.typeOf(valueEntry.varType()), valueEntry.value());
-		} else if (valueType instanceof FunctionEntry) {
-			FunctionEntry functionEntry = (FunctionEntry) valueType;
-			variable = new FunctionVariable(entry.name() , functionEntry);
-		}
-		context.addVariable(variable);
+		context.addVariable(InterpreterUtils.variableOf(entry));
 	}
+	
+	/**  
+	 *@Description:  方法型变量
+	 *@Author:zouziwen
+	 *@Since:2017年3月9日  
+	 *@Version:1.1.0  
+	 */
+	static class FunctionVariable implements Variable {
 
+		FunctionEntry function;
 
-	class JavaVariable implements Variable {
+		String name;
+
+		public FunctionVariable(String name, FunctionEntry f) {
+			this.name = name;
+			function = f;
+		}
+
+		@Override
+		public String name() {
+			return name;
+		}
+
+		@Override
+		public Object value() {
+			return function;
+		}
+
+		@Override
+		public Class<?> type() {
+			return FunctionEntry.class;
+		}
+
+	}
+	
+	/**  
+	 *@Description:  Java变量
+	 *@Author:zouziwen
+	 *@Since:2017年3月9日  
+	 *@Version:1.1.0  
+	 */
+	static class JavaVariable implements Variable {
 
 		String name;
 
@@ -49,7 +76,7 @@ class VariableInterpreter extends AbstractInterpreter<VariableEntry> {
 
 		Object value;
 
-		JavaVariable(String name) {
+		public JavaVariable(String name) {
 			this(name, null, null);
 		}
 
@@ -82,32 +109,4 @@ class VariableInterpreter extends AbstractInterpreter<VariableEntry> {
 
 	}
 
-	class FunctionVariable implements Variable {
-
-		FunctionEntry function;
-		
-		String name;
-		
-		FunctionVariable(String name , FunctionEntry f) {
-			this.name = name;
-			function = f;
-		}
-		
-		@Override
-		public String name() {
-			return name;
-		}
-
-		@Override
-		public Object value() {
-			return function;
-		}
-
-		@Override
-		public Class<?> type() {
-			return FunctionEntry.class;
-		}
-		
-	}
-	
 }

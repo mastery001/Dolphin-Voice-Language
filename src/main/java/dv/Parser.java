@@ -4,6 +4,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.Vector;
 
 import dv.constExpr.And;
@@ -45,11 +46,6 @@ class Parser {
 	 */
 	Arguments arguments;
 
-	/**  
-	 *   关键字
-	 */
-	private String[] keywords;
-
 	Token token = null;
 
 	/**  
@@ -77,9 +73,8 @@ class Parser {
 	 */
 	private ExprFactory exprFactory = null;
 
-	Parser(Arguments arguments, ExprFactory exprFactory, String[] keywords) {
+	Parser(Arguments arguments, ExprFactory exprFactory) {
 		this.arguments = arguments;
-		this.keywords = keywords;
 		this.exprFactory = exprFactory;
 		module = new ModuleEntry();
 	}
@@ -88,7 +83,7 @@ class Parser {
 		IncludeEntry fileEntry = new IncludeEntry();
 		fileEntry.name('"' + file + '"');
 
-		scanner = new Scanner(fileEntry, keywords);
+		scanner = new Scanner(fileEntry);
 
 		module.sourceFile(fileEntry);
 
@@ -128,8 +123,8 @@ class Parser {
 		while (!token.equals(Token.EOF)) {
 			// 解析语句
 			definition(entry);
-			addToEmitList(entry);
 		}
+		addToEmitList(entry);
 	}
 
 	/**  
@@ -150,6 +145,17 @@ class Parser {
 				// 赋值或调用
 				optDcl(entry);
 				break;
+			case Token.IF:
+			case Token.ELSE:
+			case Token.FOR:				
+			case Token.WHILE:  
+			case Token.DO:
+			case Token.SWITCH:
+			case Token.CASE:
+			case Token.DEFAULT:
+			case Token.BREAK:
+			case Token.CONTINUE:
+			case Token.RETURN:
 			default:
 				throw ParseException.syntaxError(scanner, new int[] { Token.VAR, Token.FUNCTION, Token.Identifier },
 						token.type);
@@ -240,7 +246,7 @@ class Parser {
 
 	private void addFunctionParam(ModuleEntry entry, FunctionEntry functionEntry) throws IOException, ParseException {
 		SymtabEntry newEntry = param(entry, functionEntry);
-		if (newEntry != null && isntInList(functionEntry.parameters(), newEntry.name())) {
+		if (functionEntry.invoke() || (newEntry != null && isntInList(functionEntry.parameters(), newEntry.name()))) {
 			functionEntry.addParameter(newEntry);
 		}
 
@@ -268,9 +274,12 @@ class Parser {
 					match(Token.Plus);
 					SymtabEntry e = param(entry, functionEntry);
 					if (e instanceof JoinEntry) {
-						e = ((JoinEntry) e).entries().get(0);
+						for(Iterator<SymtabEntry> it = ((JoinEntry) e).entries().iterator(); it.hasNext();) {
+							je.addEntry(it.next());
+						}
+					}else {
+						je.addEntry(e);
 					}
-					je.addEntry(e);
 				}
 				return je;
 			} else {
@@ -700,10 +709,12 @@ class Parser {
 	private void match(int type) throws IOException, ParseException {
 		ParseException exception = null;
 		if (!token.equals(type)) {
-			exception = ParseException.syntaxError(scanner, type, token.type);
+			if(!(type == Token.Semicolon && tokenHistory.lookBack(1).type == Token.RightBrace)) {
+				exception = ParseException.syntaxError(scanner, type, token.type);
 
-			if (type == Token.Semicolon)
-				return;
+				if (type == Token.Semicolon)
+					return;
+			}
 		}
 
 		token = scanner.getToken();

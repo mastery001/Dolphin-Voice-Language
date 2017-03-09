@@ -101,5 +101,10 @@ public class ExecutionContext{
 		}
 		return parent;
 	}
+
+	@Override
+	public String toString() {
+		return "ExecutionContext [variables=" + variables + ", functions=" + functions + "]";
+	}
 	
 }

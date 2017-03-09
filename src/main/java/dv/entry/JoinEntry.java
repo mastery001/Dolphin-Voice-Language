@@ -19,4 +19,9 @@ public class JoinEntry extends SymtabEntry{
 	public Vector<SymtabEntry> entries() {
 		return entries;
 	}
+
+	@Override
+	public String toString() {
+		return super.toString() + "[entries=" + entries + "]";
+	}
 }

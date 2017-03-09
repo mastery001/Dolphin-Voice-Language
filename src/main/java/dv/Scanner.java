@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Stack;
-import java.util.Vector;
 
 import dv.entry.IncludeEntry;
 
@@ -34,17 +33,12 @@ class Scanner {
 	 */
 	Stack<ScannerData> dataStack = new Stack<ScannerData>();
 	
-	/**  
-	 *   关键字
-	 */
-	Vector<String> keywords = new Vector<String>();
 	ScannerData data = new ScannerData();
 
 	boolean escapedOK = true;
 
-	Scanner(IncludeEntry file, String[] keywords) throws IOException {
+	Scanner(IncludeEntry file) throws IOException {
 		readFile(file);
-		sortKeywords(keywords);
 		init();
 	}
 
@@ -61,11 +55,6 @@ class Scanner {
 		stringScanner = new StringScanner();
 		numberScanner = new NumberScanner();
 		charScanner = new CharScanner();
-	}
-
-	void sortKeywords(String[] keywords) {
-		for (int i = 0; i < keywords.length; ++i)
-			this.keywords.addElement(keywords[i]);
 	}
 
 	void readFile(IncludeEntry file) throws IOException {
@@ -413,8 +402,6 @@ class Scanner {
 		}
 
 		String getIdentifier(String string) {
-			if (keywords.contains(string))
-				string = '_' + string;
 			return string;
 		}
 	}

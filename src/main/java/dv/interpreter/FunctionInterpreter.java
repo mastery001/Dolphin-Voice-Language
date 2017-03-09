@@ -1,6 +1,7 @@
 package dv.interpreter;
 
 import java.util.Enumeration;
+import java.util.Vector;
 
 import dv.ExecutionContext;
 import dv.Function;
@@ -9,6 +10,8 @@ import dv.InterpreterChain;
 import dv.Variable;
 import dv.entry.FunctionEntry;
 import dv.entry.SymtabEntry;
+import dv.entry.ValueEntry;
+import dv.entry.VariableEntry;
 import dv.interpreter.VariableInterpreter.FunctionVariable;
 import dv.toJava.JavaFunction;
 
@@ -45,25 +48,48 @@ class FunctionInterpreter extends AbstractInterpreter<FunctionEntry> {
 			}else {
 				function = new DvFunction(entry, ExecutionContext.newContext(context) , chain);
 			}
+			context.addFunction(function);
+		}else {
+			if(function instanceof JavaFunction) {
+				JavaFunction javaFunction = (JavaFunction) function;
+				javaFunction.set(context, entry.parameters());
+			}else if(function instanceof DvFunction) {
+				// 函数声明的实体
+				Vector<SymtabEntry> declaredParams = function.entry().parameters();
+				Vector<SymtabEntry> invokeParams = entry.parameters();
+				SymtabEntry declaredParamEntry = null;
+				for(int i = 0 ; i < declaredParams.size() ; i ++) {
+					declaredParamEntry = declaredParams.get(i);
+					SymtabEntry invoke = invokeParams.get(i);
+					if(invoke instanceof VariableEntry) {
+						Variable variable = context.variableOf(invoke.name());
+						declaredParamEntry.type(new ValueEntry(variable.value()));
+					}else {
+						// 赋值
+						declaredParamEntry.type(invokeParams.get(i));
+					}
+				}
+			}
 		}
-		if(function instanceof JavaFunction) {
-			JavaFunction javaFunction = (JavaFunction) function;
-			javaFunction.set(context, entry.parameters());
-		}
-		context.addFunction(function);
 		return function;
 	}
-
-	class DvFunction implements Function {
+	
+	/**  
+	 *@Description:  dv语言提供的方法
+	 *@Author:zouziwen
+	 *@Since:2017年3月9日  
+	 *@Version:1.1.0  
+	 */
+	static class DvFunction implements Function {
 
 		FunctionEntry entry;
-		
+
 		// 当前函数执行上下文
-		ExecutionContext context ;
-		
+		ExecutionContext context;
+
 		InterpreterChain chain;
-		
-		DvFunction(FunctionEntry entry , ExecutionContext context , InterpreterChain chain) {
+
+		public DvFunction(FunctionEntry entry, ExecutionContext context, InterpreterChain chain) {
 			this.entry = entry;
 			this.context = context;
 			this.chain = chain;
@@ -81,7 +107,7 @@ class FunctionInterpreter extends AbstractInterpreter<FunctionEntry> {
 
 		@Override
 		public String toString() {
-			return "DvFunction [name="+ name()+"---entry=" + entry + "]";
+			return "DvFunction [name=" + name() + "---entry=" + entry + "]";
 		}
 
 		@Override
@@ -98,7 +124,7 @@ class FunctionInterpreter extends AbstractInterpreter<FunctionEntry> {
 			}
 			return null;
 		}
-		
+
 	}
-	
+
 }

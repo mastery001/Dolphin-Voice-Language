@@ -47,7 +47,7 @@ public class Compiler {
 		initFactories();
 		arguments.parseArgs(args);
 		initInterpreter();
-		parser = new Parser(arguments, exprFactory, keywords);
+		parser = new Parser(arguments, exprFactory);
 	}
 
 	private void initInterpreter() {
@@ -83,10 +83,6 @@ public class Compiler {
 		else
 			context = tmpContext;
 
-		// Get the language keywords.
-		keywords = factories.languageKeywords();
-		if (keywords == null)
-			keywords = new String[0];
 	}
 
 	protected Factories factories() {
@@ -96,8 +92,6 @@ public class Compiler {
 	public Arguments arguments = null;
 
 	private Factories factories = null;
-
-	private String[] keywords = null;
 
 	private Parser parser = null;
 
