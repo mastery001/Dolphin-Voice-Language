@@ -9,7 +9,7 @@
 
 ## Examples
 
-1. 简单语法
+#### 简单语法
 
 **Input：**
 
@@ -40,7 +40,7 @@ outer a 3
 outer b 2
 ```
 
-2. define-as语法
+#### define-as语法
 
 **Input：**
 
