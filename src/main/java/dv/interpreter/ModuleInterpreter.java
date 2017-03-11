@@ -20,6 +20,7 @@ public class ModuleInterpreter extends AbstractInterpreter<ModuleEntry> {
 		if(init) {
 			addInterpreter(new FunctionInterpreter());
 			addInterpreter(new VariableInterpreter());
+			addInterpreter(new JavaObjectAssociationInterpreter());
 		}
 	}
 

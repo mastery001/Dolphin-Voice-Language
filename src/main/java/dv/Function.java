@@ -8,7 +8,7 @@ import dv.entry.FunctionEntry;
  *
  * 2016年6月13日 下午3:02:35
  */
-public interface Function{
+public interface Function {
 
 	/**
 	 * 该方法的执行上下文
@@ -26,5 +26,5 @@ public interface Function{
 	
 	FunctionEntry entry();
 	
-	Object invoke();
+	Object invoke() throws Exception;
 }

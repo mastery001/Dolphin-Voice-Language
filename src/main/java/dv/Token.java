@@ -14,26 +14,30 @@ package dv;
  */
 public class Token {
 
+	private static final int KEYWORD_START = 6;
+	
 	public static final int 
 			/*
 		     * Declaration keywords
 		     */
-			VAR			    = 0,
-			FUNCTION        = 1,
+			VAR			    = 6,
+			FUNCTION        = 7,
+			DEFINE			= 8,
+			AS 				= 9,
 			/*
 			 * Statement keywords
 			 */
-			IF				= 2,
-			ELSE			= 3,
-			FOR				= 4,
-			WHILE		    = 5,
-			DO              = 6,
-			SWITCH          = 7,
-			CASE            = 8,
-			DEFAULT         = 9,
-			BREAK           = 10,
-			CONTINUE        = 11,
-			RETURN          = 12,
+			IF				= 10,
+			ELSE			= 11,
+			FOR				= 12,
+			WHILE		    = 13,
+			DO              = 14,
+			SWITCH          = 15,
+			CASE            = 16,
+			DEFAULT         = 17,
+			BREAK           = 18,
+			CONTINUE        = 19,
+			RETURN          = 20,
 			
 			Identifier           =  80, // Identifier
 			
@@ -91,12 +95,12 @@ public class Token {
 	
 
 	// dv语言的关键字
-	public static final String[] Keywords = { "var" , "function" , "if" , "else" , "for" , "while" , "do" , "switch" , "case" , "default" , "break" , "continue" , "return"};
+	public static final String[] Keywords = { "var" , "function" , "define" , "as" ,  "if" , "else" , "for" , "while" , "do" , "switch" , "case" , "default" , "break" , "continue" , "return"};
 	
 	// 关键字的初始下标，结束下标
 	static final int 
 	FirstKeyword = 0,
-	LastKeyword = 12;
+	LastKeyword = 14;
 	
 	// 符号的初始下标，结束下标
 	static final int 
@@ -226,7 +230,7 @@ public class Token {
 				if (string.equals ("TRUE") || string.equals ("FALSE"))
 	                return new Token (Token.BooleanLiteral, string) ;
 				else 
-					return new Token (i);
+					return new Token (i + KEYWORD_START);
 			}else if (string.equalsIgnoreCase (Token.Keywords[i])) {
 	            collision[0] |= true;
 	            break;

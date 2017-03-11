@@ -1,0 +1,9 @@
+define java.util.ArrayList as list
+define java.util.Date as date
+
+list->add(1);
+list->add("1332");
+
+println(date->getTime());
+
+println(list);

@@ -2,7 +2,6 @@ package dv;
 
 import dv.constExpr.DefaultExprFactory;
 import dv.constExpr.ExprFactory;
-import dv.toJava.PrinterJavaFunction;
 
   
 /**  
@@ -35,16 +34,6 @@ public class Factories {
 	 */
 	public InterpreterFactory interpreterFactory() {
 		return new InterpreterFactory();
-	}
-	
-	/**  
-	 * @return  
-	 * @Description:  解释器执行上下文
-	 */
-	public ExecutionContext executionContext() {
-		ExecutionContext bootstrap = ExecutionContext.newContext();
-		bootstrap.addFunction(new PrinterJavaFunction());
-		return bootstrap;
 	}
 	
 	/**  

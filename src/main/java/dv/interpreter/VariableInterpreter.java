@@ -7,7 +7,11 @@ import dv.InterpreteException;
 import dv.InterpreterChain;
 import dv.Variable;
 import dv.entry.FunctionEntry;
+import dv.entry.JoinEntry;
+import dv.entry.SymtabEntry;
+import dv.entry.ValueEntry;
 import dv.entry.VariableEntry;
+import dv.utils.TypeUtils;
 
 /**
  * 变量解释器
@@ -25,8 +29,38 @@ class VariableInterpreter extends AbstractInterpreter<VariableEntry> {
 
 	@Override
 	public void interprete0(InterpreterChain chain, VariableEntry entry, ExecutionContext context)  throws InterpreteException{
-		context.addVariable(InterpreterUtils.variableOf(entry));
+		try {
+			context.addVariable(variableOf(entry));
+		} catch (Exception e) {
+			if(e instanceof InterpreteException) {
+				throw (InterpreteException)e;
+			}
+			throw new InterpreteException(e);
+		}
 	}
+	
+	Variable variableOf(SymtabEntry entry) throws Exception {
+		SymtabEntry valueType = entry.type();
+		return variableOf(entry, valueType);
+	}
+
+	Variable variableOf(SymtabEntry entry, SymtabEntry valueType) throws Exception{
+		Variable variable = null;
+		if (valueType instanceof ValueEntry) {
+			ValueEntry valueEntry = (ValueEntry) valueType;
+			variable = new JavaVariable(entry.name(), TypeUtils.typeOf(valueEntry.varType()), valueEntry.value());
+		} else if (valueType instanceof FunctionEntry) {
+			FunctionEntry functionEntry = (FunctionEntry) valueType;
+			variable = new FunctionVariable(entry.name() , functionEntry);
+		}else if(valueType instanceof JoinEntry) {
+			JoinEntry join = (JoinEntry) valueType;
+			if(join.entries().size() == 1) {
+				return variableOf(entry , join.entries().get(0));
+			}
+ 		}
+		return variable;
+	}
+	
 	
 	/**  
 	 *@Description:  方法型变量
@@ -108,5 +142,7 @@ class VariableInterpreter extends AbstractInterpreter<VariableEntry> {
 		}
 
 	}
+
+
 
 }

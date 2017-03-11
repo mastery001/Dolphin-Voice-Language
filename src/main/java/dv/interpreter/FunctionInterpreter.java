@@ -1,19 +1,13 @@
 package dv.interpreter;
 
 import java.util.Enumeration;
-import java.util.Vector;
 
 import dv.ExecutionContext;
 import dv.Function;
 import dv.InterpreteException;
 import dv.InterpreterChain;
-import dv.Variable;
 import dv.entry.FunctionEntry;
 import dv.entry.SymtabEntry;
-import dv.entry.ValueEntry;
-import dv.entry.VariableEntry;
-import dv.interpreter.VariableInterpreter.FunctionVariable;
-import dv.toJava.JavaFunction;
 
 /**
  * 方法解释器
@@ -30,48 +24,18 @@ class FunctionInterpreter extends AbstractInterpreter<FunctionEntry> {
 
 	@Override
 	public void interprete0(InterpreterChain chain , FunctionEntry entry, ExecutionContext context)  throws InterpreteException{
-		Function function = functionOf(chain , entry, context);
-		// 函数需要调用时解释
-		if(entry.invoke()) {
-			function.invoke();
-		}
-	}
-
-	private Function functionOf(InterpreterChain chain , FunctionEntry entry, ExecutionContext context) {
-		String name = entry.name();
-		Function function = context.functionOf(name);
-		if(function == null) {
-			Variable variable = context.variableOf(name);
-			if(variable instanceof FunctionVariable) {
-				FunctionEntry fe = (FunctionEntry) variable.value();
-				function = context.functionOf(fe.name());
-			}else {
-				function = new DvFunction(entry, ExecutionContext.newContext(context) , chain);
+		try {
+			Function function = InterpreterUtils.functionOf(context , entry);
+			// 函数需要调用时解释
+			if(entry.invoke()) {
+				function.invoke();
 			}
-			context.addFunction(function);
-		}else {
-			if(function instanceof JavaFunction) {
-				JavaFunction javaFunction = (JavaFunction) function;
-				javaFunction.set(context, entry.parameters());
-			}else if(function instanceof DvFunction) {
-				// 函数声明的实体
-				Vector<SymtabEntry> declaredParams = function.entry().parameters();
-				Vector<SymtabEntry> invokeParams = entry.parameters();
-				SymtabEntry declaredParamEntry = null;
-				for(int i = 0 ; i < declaredParams.size() ; i ++) {
-					declaredParamEntry = declaredParams.get(i);
-					SymtabEntry invoke = invokeParams.get(i);
-					if(invoke instanceof VariableEntry) {
-						Variable variable = context.variableOf(invoke.name());
-						declaredParamEntry.type(new ValueEntry(variable.value()));
-					}else {
-						// 赋值
-						declaredParamEntry.type(invokeParams.get(i));
-					}
-				}
+		} catch (Exception e) {
+			if(e instanceof InterpreteException) {
+				throw (InterpreteException)e;
 			}
+			throw new InterpreteException(e);
 		}
-		return function;
 	}
 	
 	/**  
@@ -89,10 +53,10 @@ class FunctionInterpreter extends AbstractInterpreter<FunctionEntry> {
 
 		InterpreterChain chain;
 
-		public DvFunction(FunctionEntry entry, ExecutionContext context, InterpreterChain chain) {
+		public DvFunction(FunctionEntry entry, ExecutionContext context) {
 			this.entry = entry;
 			this.context = context;
-			this.chain = chain;
+			this.chain = context.interpreterChain();
 		}
 
 		@Override
@@ -126,5 +90,4 @@ class FunctionInterpreter extends AbstractInterpreter<FunctionEntry> {
 		}
 
 	}
-
 }

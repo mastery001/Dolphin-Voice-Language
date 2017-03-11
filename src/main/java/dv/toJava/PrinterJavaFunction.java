@@ -1,6 +1,6 @@
 package dv.toJava;
 
-import java.util.Vector;
+import dv.interpreter.JavaFunction;
 
   
 /**  
@@ -16,8 +16,8 @@ public class PrinterJavaFunction extends JavaFunction{
 	}
 
 	@Override
-	protected Object invoke0(Vector<Object> params) {
-		System.out.println(params.get(0));
+	protected Object invoke0(Object[] params) {
+		System.out.println(params[0]);
 		return null;
 	}
 

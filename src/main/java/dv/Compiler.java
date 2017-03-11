@@ -7,6 +7,7 @@ import dv.constExpr.DefaultExprFactory;
 import dv.constExpr.ExprFactory;
 import dv.entry.ModuleEntry;
 import dv.interpreter.ModuleInterpreter;
+import dv.toJava.PrinterJavaFunction;
 
 public class Compiler {
 
@@ -18,8 +19,8 @@ public class Compiler {
 		try {
 			init(args);
 			parse();
+			//Printer.print(parser.module.contained());
 			interprete();
-//			Printer.print(parser.module.contained());
 		} catch (IOException e) {
 			System.err.println(e);
 		} catch (InvalidArgument e) {
@@ -36,9 +37,13 @@ public class Compiler {
 
 	private void interprete() {
 		if (emitList != null) {
+
+			bootstrap = ExecutionContext.newContext(moduleInterpreter.chain());
+			bootstrap.addFunction(new PrinterJavaFunction());
+			
 			while (emitList.hasMoreElements()) {
 				ModuleEntry entry = (ModuleEntry) emitList.nextElement();
-				moduleInterpreter.interprete(moduleInterpreter.chain(), entry, context);
+				moduleInterpreter.interprete(moduleInterpreter.chain(), entry, bootstrap);
 			}
 		}
 	}
@@ -76,13 +81,6 @@ public class Compiler {
 			exprFactory = new DefaultExprFactory();
 		else
 			exprFactory = tmpExprF;
-
-		ExecutionContext tmpContext = factories.executionContext();
-		if (tmpContext == null)
-			context = ExecutionContext.newContext();
-		else
-			context = tmpContext;
-
 	}
 
 	protected Factories factories() {
@@ -103,6 +101,6 @@ public class Compiler {
 
 	private ModuleInterpreter moduleInterpreter = null;
 
-	private ExecutionContext context = null;
+	private ExecutionContext bootstrap = null;
 
 }

@@ -12,20 +12,28 @@ import java.util.Map;
  */
 public class ExecutionContext{
 
+	private ExecutionContext root;
+	
 	private ExecutionContext parent;
 	
 	private Map<String, Variable> variables = new HashMap<String, Variable>();
 	private Map<String, Function> functions = new HashMap<String, Function>();
+	
+	private final InterpreterChain interpreterChain;
 
-	public static ExecutionContext newContext() {
-		return newContext(null);
+	public static ExecutionContext newContext(InterpreterChain interpreterChain) {
+		return newContext(interpreterChain , null);
 	}
 	
-	public static ExecutionContext newContext(ExecutionContext parent) {
-		return new ExecutionContext(parent);
+	public static ExecutionContext newContext(InterpreterChain interpreterChain , ExecutionContext parent) {
+		return new ExecutionContext(interpreterChain , parent);
 	}
 	
-	private ExecutionContext(ExecutionContext parent) {
+	private ExecutionContext(InterpreterChain interpreterChain , ExecutionContext parent) {
+		if(parent == null) {
+			root = this;
+		}
+		this.interpreterChain = interpreterChain;
 		this.parent = parent;
 	}
 
@@ -102,6 +110,14 @@ public class ExecutionContext{
 		return parent;
 	}
 
+	public ExecutionContext root() {
+		return this.root;
+	}
+	
+	public InterpreterChain interpreterChain() {
+		return this.interpreterChain;
+	}
+	
 	@Override
 	public String toString() {
 		return "ExecutionContext [variables=" + variables + ", functions=" + functions + "]";

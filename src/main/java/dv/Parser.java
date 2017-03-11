@@ -4,7 +4,6 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Enumeration;
-import java.util.Iterator;
 import java.util.Vector;
 
 import dv.constExpr.And;
@@ -26,6 +25,7 @@ import dv.constExpr.Times;
 import dv.constExpr.Xor;
 import dv.entry.FunctionEntry;
 import dv.entry.IncludeEntry;
+import dv.entry.JavaObjectAssociationEntry;
 import dv.entry.JoinEntry;
 import dv.entry.ModuleEntry;
 import dv.entry.SymtabEntry;
@@ -133,8 +133,13 @@ class Parser {
 	 * @Description:  解析变量，方法，或赋值或方法调用
 	 */
 	private void definition(ModuleEntry entry) throws IOException {
+		boolean skip = false;
 		try {
 			switch (token.type) {
+			case Token.DEFINE : 
+				skip = true;
+				associateJavaType(entry);
+				break;
 			case Token.VAR:
 				varType(entry);
 				break;
@@ -160,11 +165,34 @@ class Parser {
 				throw ParseException.syntaxError(scanner, new int[] { Token.VAR, Token.FUNCTION, Token.Identifier },
 						token.type);
 			}
-			// 匹配;符号，并读取下一个token(;代表一行的结束)
-			match(Token.Semicolon);
+			if(!skip) 
+				// 匹配;符号，并读取下一个token(;代表一行的结束)
+				match(Token.Semicolon);
 		} catch (ParseException e) {
 			skipToSemicolon();
 		}
+	}
+
+	/**  
+	 * @param entry  
+	 * @throws ParseException 
+	 * @throws IOException 
+	 * @Description:  关联Java对象
+	 */
+	private void associateJavaType(ModuleEntry entry) throws IOException, ParseException {
+		match(Token.DEFINE);
+		StringBuilder sb = new StringBuilder(token.getName());
+		// 获取对应java的类名
+		match(Token.Identifier);
+		while(token.equals(Token.Period)) {
+			match(Token.Period);
+			sb.append(".").append(token.getName());
+			match(Token.Identifier);
+		}
+		match(Token.AS);
+		String dvObjectName = token.getName();
+		match(Token.Identifier);
+		addToContainer(entry, new JavaObjectAssociationEntry(sb.toString() , dvObjectName));
 	}
 
 	/**
@@ -176,8 +204,7 @@ class Parser {
 	 *             2016年6月17日 下午3:34:31
 	 */
 	private void optDcl(ModuleEntry entry) throws IOException, ParseException {
-		String name = token.getName();
-		match(Token.Identifier);
+		String name = getName();
 		// 赋值
 		if (token.equals(Token.Equal)) {
 			VariableEntry varEntry = makeVariableEntry(name, entry);
@@ -188,6 +215,18 @@ class Parser {
 			FunctionEntry functionEntry = makeFunctionEntry(name, entry, true);
 			params(entry, functionEntry);
 		}
+	}
+
+	private String getName() throws IOException, ParseException {
+		StringBuilder sb = new StringBuilder(token.getName());
+		match(Token.Identifier);
+		if(token.equals(Token.Minus)) {
+			match(Token.Minus);
+			match(Token.GreaterThan);
+			sb.append("->").append(token.getName()).toString();
+			match(Token.Identifier);
+		}
+		return sb.toString();
 	}
 
 	private FunctionEntry functionType(ModuleEntry entry) throws IOException, ParseException {
@@ -246,7 +285,10 @@ class Parser {
 
 	private void addFunctionParam(ModuleEntry entry, FunctionEntry functionEntry) throws IOException, ParseException {
 		SymtabEntry newEntry = param(entry, functionEntry);
-		if (functionEntry.invoke() || (newEntry != null && isntInList(functionEntry.parameters(), newEntry.name()))) {
+		if(newEntry == null) {
+			return ;
+		}
+		if (functionEntry.invoke() || isntInList(functionEntry.parameters(), newEntry.name())) {
 			functionEntry.addParameter(newEntry);
 		}
 
@@ -263,44 +305,79 @@ class Parser {
 		return isnt;
 	}
 
-	private SymtabEntry param(ModuleEntry entry, FunctionEntry functionEntry) throws IOException, ParseException {
-		if (token.equals(Token.Identifier) || token.isLiterals()) { // 形如 var a
-																	// = b(c,d);
-			if (functionEntry.invoke() && token.isLiterals()) {
-				JoinEntry je = new JoinEntry();
-				je.addEntry(makeValueEntry(token.getName()));
-				match(token.type);
-				while (token.equals(Token.Plus)) {
-					match(Token.Plus);
-					SymtabEntry e = param(entry, functionEntry);
-					if (e instanceof JoinEntry) {
-						for(Iterator<SymtabEntry> it = ((JoinEntry) e).entries().iterator(); it.hasNext();) {
-							je.addEntry(it.next());
-						}
-					}else {
-						je.addEntry(e);
-					}
-				}
-				return je;
+	private SymtabEntry param0(ModuleEntry entry, FunctionEntry functionEntry) throws IOException, ParseException {
+		if(token.isLiterals()) {
+			return makeValueEntry(operateExp(functionEntry).value());
+		}else if(token.equals(Token.Identifier)) {
+			//String paramName = token.getName();
+			//match(Token.Identifier);
+			String paramName = getName();
+			if (functionEntry.invoke() && token.equals(Token.LeftParen)) {
+				FunctionEntry fe = makeFunctionEntry(paramName, entry, functionEntry.invoke());
+				params(entry, fe);
+				// 函数参数中使用函数
+				return fe;
 			} else {
-				String paramName = token.getName();
-				match(Token.Identifier);
-				if (functionEntry.invoke() && token.equals(Token.LeftParen)) {
-					FunctionEntry fe = makeFunctionEntry(paramName, entry, functionEntry.invoke());
-					params(entry, fe);
-					// 函数参数中使用函数
-					return fe;
-				} else {
-					return makeVariableEntry(paramName, functionEntry);
-				}
+				return makeVariableEntry(paramName, functionEntry);
 			}
 		}
 		return null;
+	}
+	
+	private SymtabEntry param(ModuleEntry entry, FunctionEntry functionEntry) throws IOException, ParseException {
+		SymtabEntry se = param0(entry, functionEntry);
+		if (token.equals(Token.Plus)) {
+			JoinEntry je = new JoinEntry();
+			je.addEntry(se);
+			while (token.equals(Token.Plus)) {
+				match(Token.Plus);
+				SymtabEntry tmp = param0(entry, functionEntry);
+				if(tmp != null) {
+					je.addEntry(tmp);
+				}
+			}
+			return je;
+		}
+		return se;
+//		if (token.equals(Token.Identifier) || token.isLiterals()) { // 形如 var a
+//																	// = b(c,d);
+//			if (functionEntry.invoke() && token.isLiterals()) {
+//				JoinEntry je = new JoinEntry();
+//				je.addEntry(makeValueEntry(token.getName()));
+//				match(token.type);
+//				while (token.equals(Token.Plus)) {
+//					match(Token.Plus);
+//					SymtabEntry e = param(entry, functionEntry);
+//					if (e instanceof JoinEntry) {
+//						for(Iterator<SymtabEntry> it = ((JoinEntry) e).entries().iterator(); it.hasNext();) {
+//							je.addEntry(it.next());
+//						}
+//					}else {
+//						je.addEntry(e);
+//					}
+//				}
+//				return je;
+//			} else {
+//				//String paramName = token.getName();
+//				//match(Token.Identifier);
+//				String paramName = getName();
+//				if (functionEntry.invoke() && token.equals(Token.LeftParen)) {
+//					FunctionEntry fe = makeFunctionEntry(paramName, entry, functionEntry.invoke());
+//					params(entry, fe);
+//					// 函数参数中使用函数
+//					return fe;
+//				} else {
+//					return makeVariableEntry(paramName, functionEntry);
+//				}
+//			}
+//		}
+//		return null;
 	}
 
 	private ValueEntry makeValueEntry(Object value) {
 		ValueEntry e = new ValueEntry();
 		e.value(value);
+		e.varType(token.type);
 		return e;
 	}
 
@@ -506,12 +583,18 @@ class Parser {
 	}
 
 	private Expression addExpr(Expression e, ModuleEntry entry) throws IOException, ParseException {
+
 		if (e == null)
 			e = multExpr(null, entry);
 		else {
 			BinaryExpr b = (BinaryExpr) e;
 			b.right(multExpr(null, entry));
 			e.rep(e.rep() + b.right().rep());
+		}
+		// 防止加号和连接符碰撞
+		Object value = e.value();
+		if(value instanceof String || value instanceof Boolean || value instanceof Character){
+			return e;
 		}
 		if (token.equals(Token.Plus)) {
 			match(token.type);
@@ -607,7 +690,7 @@ class Parser {
 			break;
 		default:
 			throw ParseException.syntaxError(scanner,
-					new int[] { Token.Identifier, Token.DoubleColon, Token.Literal, Token.LeftParen }, token.type);
+					new int[] { Token.Identifier, Token.Literal, Token.LeftParen }, token.type);
 		}
 		return primary;
 	}

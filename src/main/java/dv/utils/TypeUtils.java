@@ -1,5 +1,8 @@
 package dv.utils;
 
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+
 import dv.Token;
 
 public class TypeUtils {
@@ -49,5 +52,13 @@ public class TypeUtils {
 		return valueType;
 	}
 
+	
+	public static Type[] getParameterizedTypes(Object object) {
+	    Type superclassType = object.getClass().getGenericSuperclass();
+	    if (!ParameterizedType.class.isAssignableFrom(superclassType.getClass())) {
+	        return null;
+	    }
+	    return ((ParameterizedType)superclassType).getActualTypeArguments();
+	}
 
 }
