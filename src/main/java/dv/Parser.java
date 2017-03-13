@@ -120,6 +120,14 @@ class Parser {
 	}
 
 	private void specification(ModuleEntry entry) throws IOException {
+		// define-as语法必须在所有语句之前
+		while(!token.equals(Token.EOF) && token.equals(Token.DEFINE)) {
+			try {
+				associateJavaType(entry);
+			} catch (ParseException e) {
+				skipToSemicolon();
+			}
+		}
 		while (!token.equals(Token.EOF)) {
 			// 解析语句
 			definition(entry);
@@ -133,13 +141,8 @@ class Parser {
 	 * @Description:  解析变量，方法，或赋值或方法调用
 	 */
 	private void definition(ModuleEntry entry) throws IOException {
-		boolean skip = false;
 		try {
 			switch (token.type) {
-			case Token.DEFINE : 
-				skip = true;
-				associateJavaType(entry);
-				break;
 			case Token.VAR:
 				varType(entry);
 				break;
@@ -151,23 +154,17 @@ class Parser {
 				optDcl(entry);
 				break;
 			case Token.IF:
-			case Token.ELSE:
 			case Token.FOR:				
 			case Token.WHILE:  
 			case Token.DO:
 			case Token.SWITCH:
-			case Token.CASE:
-			case Token.DEFAULT:
-			case Token.BREAK:
-			case Token.CONTINUE:
-			case Token.RETURN:
+				break;
 			default:
 				throw ParseException.syntaxError(scanner, new int[] { Token.VAR, Token.FUNCTION, Token.Identifier },
 						token.type);
 			}
-			if(!skip) 
-				// 匹配;符号，并读取下一个token(;代表一行的结束)
-				match(Token.Semicolon);
+			// 匹配;符号，并读取下一个token(;代表一行的结束)
+			match(Token.Semicolon);
 		} catch (ParseException e) {
 			skipToSemicolon();
 		}
@@ -239,7 +236,7 @@ class Parser {
 		// 参数列表
 		params(entry, functionEntry);
 		// 方法体
-		functionBody(functionEntry);
+		functionBody(entry , functionEntry);
 		return functionEntry;
 	}
 
@@ -383,20 +380,41 @@ class Parser {
 
 	/**
 	 * 解析方法体
+	 * @param entry 
 	 * 
 	 * @param functionEntry
 	 * @throws IOException
 	 * @throws ParseException
 	 *             2016年6月18日 下午11:52:06
 	 */
-	private void functionBody(FunctionEntry functionEntry) throws IOException, ParseException {
+	private void functionBody(ModuleEntry entry, FunctionEntry functionEntry) throws IOException, ParseException {
 		// 如果有方法体则解析方法体
 		if (token.equals(Token.LeftBrace)) {
 			match(Token.LeftBrace);
-			while (!token.equals(Token.EOF) && !token.equals(Token.RightBrace))
-				definition(functionEntry);
+			while (!token.equals(Token.EOF) && !token.equals(Token.RightBrace)) {
+				if(token.equals(Token.RETURN)) {
+					functionReturn(entry , functionEntry);
+				}else {
+					definition(functionEntry);
+				}
+			}
+			
 			match(Token.RightBrace);
 		}
+	}
+
+	/**  
+	 * @param entry 
+	 * @param functionEntry
+	 * @throws IOException
+	 * @throws ParseException  
+	 * @Description:  解析函数中return
+	 */
+	private void functionReturn(ModuleEntry entry, FunctionEntry functionEntry) throws IOException, ParseException {
+		match(Token.RETURN);
+		SymtabEntry returnEntry = param0(entry , functionEntry);
+		functionEntry.returnEntry(returnEntry);
+		match(Token.Semicolon);
 	}
 
 	/**  
@@ -409,6 +427,12 @@ class Parser {
 	private VariableEntry varType(ModuleEntry entry) throws IOException, ParseException {
 		match(Token.VAR);
 		VariableEntry varEntry = defineVariable(entry);
+		// 形如 var a=1,c=2;
+		while (token.equals(Token.Comma)) {
+			match(Token.Comma);
+			// 递归调用
+			defineVariable(entry);
+		}
 		return varEntry;
 	}
 
@@ -423,30 +447,18 @@ class Parser {
 	 */
 	private VariableEntry defineVariable(ModuleEntry entry) throws IOException, ParseException {
 		String varName = token.getName();
-		VariableEntry varEntry = null;
 		match(Token.Identifier);
-		// if next token is Semicolon , Is the definition of variable
-		if (token.equals(Token.Semicolon) || token.equals(Token.Comma)) {
-			varEntry = makeVariableEntry(varName, entry);
-		} else if (token.equals(Token.Equal)) {
-			varEntry = makeVariableEntry(varName, entry);
+		VariableEntry varEntry = makeVariableEntry(varName, entry);
+		
+		// if token type not is Comma , Semicolon or Equal
+		if(!token.equals(Token.Comma) && !token.equals(Token.Semicolon) && !token.equals(Token.Equal)) {
+			throw ParseException.syntaxError(scanner, new int[] { Token.Comma , Token.Semicolon, Token.Equal }, token.type);
+		}
+		if(token.equals(Token.Equal)) {
 			match(Token.Equal);
-			while (token.equals(Token.Identifier)) {
-				// 形如 var a=c=2;
-				VariableEntry tmp = defineVariable(entry);
-				varEntry.type(tmp.type());
-			}
 			// 给变量赋值
 			varAssignment(entry, varEntry);
-		} else {
-			throw ParseException.syntaxError(scanner, new int[] { Token.Semicolon, Token.Equal }, token.type);
-		}
-		// 形如 var a=1,c=2;
-		if (token.equals(Token.Comma)) {
-			match(Token.Comma);
-			// 递归调用
-			defineVariable(entry);
-		}
+		} 
 		return varEntry;
 	}
 
@@ -464,11 +476,6 @@ class Parser {
 		if (token.isLiterals() || token.isOperator() || token.equals(Token.LeftParen)) {
 			ValueEntry ve = makeValueEntry(operateExp(entry).value());
 			varEntry.type(ve);
-			
-//			Token identifierToken = token;
-//			match(token.type);
-//			ValueEntry ve = makeValueEntry(identifierToken.name, identifierToken.type);
-//			varEntry.type(ve);
 
 		} else if (token.equals(Token.FUNCTION)) {
 			// 定义方法
@@ -480,7 +487,17 @@ class Parser {
 			// 方法调用
 			String functionName = token.getName();
 			match(Token.Identifier);
-			varEntry.type(makeFunctionEntry(functionName, entry, false));
+			// 形如 var a=c=...=value
+			if(token.equals(Token.Equal)) {
+				VariableEntry tmp = makeVariableEntry(functionName, entry);
+				match(Token.Equal);
+				varAssignment(entry, tmp);
+				varEntry.type(tmp);
+			}else {
+				FunctionEntry functionEntry = makeFunctionEntry(functionName, entry, false);
+				params(entry, functionEntry);
+				varEntry.type(functionEntry);
+			}
 		} else {
 			throw ParseException.syntaxError(
 					scanner, new int[] { Token.BooleanLiteral, Token.IntegerLiteral, Token.CharacterLiteral,

@@ -198,7 +198,7 @@ public class Token {
 
 	static String toString(int type) {
 		if(type <= LastKeyword) {
-			return Keywords[type];
+			return Keywords[type - KEYWORD_START];
 		}
 		if(type == Identifier){
 			return Util.getMessage ("Token.identifier");

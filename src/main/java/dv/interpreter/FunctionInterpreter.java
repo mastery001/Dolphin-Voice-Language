@@ -80,11 +80,15 @@ class FunctionInterpreter extends AbstractInterpreter<FunctionEntry> {
 		}
 
 		@Override
-		public Object invoke() {
+		public Object invoke() throws Exception {
 			Enumeration<SymtabEntry> containeds = entry.contained().elements();
 			while (containeds.hasMoreElements()) {
 				SymtabEntry symtabEntry = containeds.nextElement();
 				chain.interprete(chain, symtabEntry, context());
+			}
+			SymtabEntry returnEntry = entry.returnEntry();
+			if(returnEntry != null) {
+				return InterpreterUtils.valueOf(context, returnEntry);
 			}
 			return null;
 		}

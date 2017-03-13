@@ -11,6 +11,11 @@ import java.util.Vector;
 public class FunctionEntry extends ModuleEntry {
 
 	private Vector<SymtabEntry> _parameters = new Vector<SymtabEntry>();
+	
+
+	private boolean _invoke;
+	
+	private SymtabEntry returnEntry;
 
 	public void addParameter(SymtabEntry parameter) {
 		_parameters.addElement(parameter);
@@ -19,8 +24,6 @@ public class FunctionEntry extends ModuleEntry {
 	public Vector<SymtabEntry> parameters() {
 		return _parameters;
 	}
-
-	private boolean _invoke;
 	
 	public boolean invoke() {
 		return _invoke;
@@ -28,6 +31,14 @@ public class FunctionEntry extends ModuleEntry {
 	
 	public void invoke(boolean invoke) {
 		_invoke = invoke;
+	}
+	
+	public SymtabEntry returnEntry() {
+		return returnEntry;
+	}
+	
+	public void returnEntry(SymtabEntry returnEntry) {
+		this.returnEntry = returnEntry;
 	}
 	
 	@Override

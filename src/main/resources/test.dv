@@ -8,8 +8,10 @@ var c = function() {
   var a = 3;
   println("inner a " + a);
   println("inner b " + b);
+  return 1;
 };
-c();
+var tmp = c();
+println("tmp is " + tmp);
 cc(d , 2);
 println("outer a " +  a);
 println("outer b " + b);
